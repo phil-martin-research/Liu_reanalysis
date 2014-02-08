@@ -1,4 +1,4 @@
 Liu_reanalysis
 ==============
 
-Analysis of Liu et al paper in Global Ecology and Biogeography
+Reanalysis of Liu et al paper in Global Ecology and Biogeography
