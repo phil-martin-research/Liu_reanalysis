@@ -1,4 +1,5 @@
-#script to look reanalysed data from Lio et al 2013 paper in GEB
+# this is a script to reanalyse the 
+# data from Lio et al 2013 paper in GEB
 
 library(ggplot2)
 library(nlme)
@@ -9,21 +10,20 @@ library(MuMIn)
 library(mgcv)
 
 #read in data
-setwd("C:/Users/Phil/Documents/My Dropbox/Work/PhD/Publications, Reports and Responsibilities/Publications/Liu_et_al/Liu_reanalysis")
+setwd("C:/Users/Phil/Documents/My Dropbox/Work/PhD/Publications, Reports and Responsibilities/Publications/Liu_et_al/Liu_reanalysis/Data")
 Liu<-read.csv("Liu_Aged.csv")
 head(Liu)
 
-
-
 #start models - these models are similar to those of liu et al
 #considering everything independantly to each other
-#but using our random variable structure
+#but using our random variable structure to account for
+#spatial autocorrelation and any systematic differences amongst studies
 
 #first we fit a dummy random variable
 Liu$dummy<-rep(1,572)
 
 #now build in spatial autocorrelation
-head(Liu)
+
 #change coordinates slightly since some sites 
 #have exactly the same coordinates
 Liu$Lat_J<-Liu$Lat+(rnorm(length(Liu$Lat),0,0.00001)) 
@@ -44,42 +44,29 @@ AICc(null.model,null.model2,null.model3)
 #be statistically valid
 
 #now let's fit the models that Liu et al used for: 
-#precipitation
-Precip_model<-lme(log(AGB)~Mean_precip,data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
+#precipitation - a model with a squared term for mean_precip
+Precip_model<-lme(log(AGB)~Mean_precip+I(Mean_precip^2),data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
 
 #Temperature
-Temp_model<-lme(log(AGB)~Mean_T,data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
+Temp_model<-lme(log(AGB)~Mean_T+I(Mean_T^2)+I(Mean_T^2),data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
 
 #Age
-Age_model<-lme(log(AGB)~Age,data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
+Age_model<-lme(log(AGB)~Age+I(Age^2),data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
 
-#all variables interacting
+#now a global model for use in model averaging
+#that contains all varibles that are needed
+#I haven't included the squared and cubed terms for temp
+#and precipitation becuase I don't think they make biological
+#sense
 All_model<-lme(log(AGB)~Age*Mean_precip*Mean_T*Age_sq,data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
-#additive model
-Add_model<-lme(log(AGB)~Age+Mean_precip+Mean_T+Age_sq,data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
 
-
-AICc(Precip_model,Temp_model,Age_model,All_model,Add_model)
-
-r.squaredGLMM(Add_model)
-
-Liu$Pred<-exp(predict(Add_model))
-
-#now a global model to test all possibilities
-
-ggplot(Liu,aes(Long,Lat,colour=Pred))+geom_point(alpha=0.8)+scale_colour_gradient(low="grey",high="dark green")
-
-global.model<-update(null.model3,~Mean_precip*Mean_T*Age+Mean_precip*Mean_T*Age_sq)
-
-plot(global.model)
-summary(global.model)
-
+plot(All_model)
 
 #now we can dredge the model so that the value of each variable in predicting biomass
 #can be assessed rather than using them in isolation
 MS1<-dredge(global.model,evaluate=T,rank=AICc,trace=T,subset=dc(Age,Age_sq),REML=F)
 poss_mod<-get.models(MS1,subset=delta<7)
-modsumm<- model.sel(poss_mod, rank = "AICc")
+modsumm<- model.sel(poss_mod, rank = "AICc",fit=T)
 modsumm2<-subset(modsumm,modsumm$delta<7)
 modsumm2
 averaged<-model.avg(modsumm)
