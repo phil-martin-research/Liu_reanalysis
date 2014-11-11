@@ -26,6 +26,35 @@ Liu_sub$Age_sq<-Liu_sub$Age^2
 Liu <- Liu_sub
 rm(si,Liu_sub)
 
+#### GGMap of study points ####
+library(maps)
+map("world", fill=TRUE, col="white", bg="lightblue", ylim=c(-60, 90), mar=c(0,0,0,0))
+d <- SpatialPointsDataFrame(cbind(Liu$Long,Liu$Lat),data=data.frame(Liu$Age,Liu$AGB))
+plot(d,color="red",cex=d$Age,pch=21,col="red",add=T)
+
+library(ggmap)
+br <- c(100,300,500,900,1200)
+theme_set(theme_classic(base_size=12,base_family = "sans"))
+mapWorld <- borders("world", colour="gray50",fill="gray50") # create a layer of borders
+map <- ggplot() + mapWorld
+map <- map + geom_path() + scale_y_continuous(breaks=(-2:2) * 30) +
+  scale_x_continuous(breaks=(-4:4) * 45)
+map <- map + coord_map("vandergrinten",xlim=c(-180,180),ylim=c(-60,70))
+# Add rectangluar shape for belt of cancer 23.5 North and South
+map <- map + geom_rect(aes(xmin=-180,xmax=180,ymin=-23.5,ymax=23.5),fill="orange",alpha=.3)
+map <- map + ylab("Latitude (°)") + xlab("Longitude (°)")
+# Add Coordinates of Study Points
+coord <- subset(Liu,select=c(Long,Lat,AGB,Age))
+map <- map + geom_point(data=coord,aes(x=Long, y=Lat,size=Age),alpha = .5,color="darkblue")  + scale_size_continuous(breaks=c(100,300,500,900,1200),range=c(1,6))# + scale_colour_gradient(low="blue",high="darkred",guide="colourbar") 
+map <- map + scale_size_continuous(guide_legend(title = "Age (in years)"))
+map
+ggsave(filename="Figures/LIU_StudyMap-Size.png",plot=map,width=9,height=4,units="in",dpi=400)
+
+# How many sites are in the tropics
+Liu_trop <- subset(Liu,(Lat>-23.5&Lat<23.5))
+nrow(Liu_trop)
+max(Liu_trop$Age)
+
 # Investigate the Structure
 hist(Liu$Age)
 hist(Liu$Mean_T)
