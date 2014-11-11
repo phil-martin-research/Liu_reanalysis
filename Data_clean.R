@@ -5,6 +5,7 @@
 
 #read in data
 <<<<<<< HEAD
+<<<<<<< HEAD
 library(gdata)
 Liu <- read.xls("Data/geb12113-sup-0001-ts1.xlsx",sheet=1)
 Liu<-read.csv("Data/Liu_et_al.csv",header=T)
@@ -12,6 +13,11 @@ Liu<-read.csv("Data/Liu_et_al.csv",header=T)
 setwd("C:/Users/Phil/Documents/My Dropbox/Work/PhD/Publications, Reports and Responsibilities/Publications/Liu_et_al/Liu_reanalysis")
 Liu<-read.csv("Liu_et_al.csv")
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+library(gdata)
+Liu <- read.xls("Data/geb12113-sup-0001-ts1.xlsx",sheet=1)
+Liu<-read.csv("Data/Liu_et_al.csv",header=T)
+>>>>>>> master
 
 #subset to give only columns of interest
 head(Liu)
@@ -27,7 +33,11 @@ Liu_sub$Age_sq<-Liu_sub$Age^2
 Liu_sub2<-subset(Liu_sub,Age>0)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 write.csv(Liu_sub2,"Liu_Aged.csv")
 =======
 write.csv(Liu_sub2,"Liu_Aged.csv")
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+write.csv(Liu_sub2,"Liu_Aged.csv")
+>>>>>>> master

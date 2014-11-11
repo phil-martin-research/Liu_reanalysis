@@ -1,15 +1,22 @@
 # this is a script to reanalyse the 
 # data from Lio et al 2013 paper in GEB
 <<<<<<< HEAD
+<<<<<<< HEAD
 rm(list=ls())
 =======
 
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+rm(list=ls())
+>>>>>>> master
 library(ggplot2)
 library(nlme)
 library(GGally)
 library(ape)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> master
 library(MuMIn)
 library(mgcv)
 library(influence.ME)
@@ -17,6 +24,7 @@ library(AICcmodavg)
 library(scales)
 #read in data
 Liu<-read.csv("Liu_Aged.csv")
+<<<<<<< HEAD
 =======
 library(cshapes)
 library(MuMIn)
@@ -27,11 +35,16 @@ setwd("C:/Users/Phil/Documents/My Dropbox/Work/PhD/Publications, Reports and Res
 Liu<-read.csv("Liu_Aged.csv")
 head(Liu)
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+>>>>>>> master
 
 hist(Liu$Age)
 hist(Liu$Mean_T)
 hist(Liu$Mean_precip)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> master
 hist(log(Liu$AGB))
 
 #### GGMap of study points ####
@@ -41,6 +54,10 @@ d <- SpatialPointsDataFrame(cbind(Liu$Long,Liu$Lat),data=data.frame(Liu$Age,Liu$
 plot(d,color="red",cex=d$Age,pch=21,col="red",add=T)
 
 library(ggmap)
+<<<<<<< HEAD
+=======
+br <- c(100,300,500,900,1200)
+>>>>>>> master
 theme_set(theme_classic(base_size=12,base_family = "sans"))
 mapWorld <- borders("world", colour="gray50",fill="gray50") # create a layer of borders
 map <- ggplot() + mapWorld
@@ -53,6 +70,10 @@ map <- map + ylab("Latitude (°)") + xlab("Longitude (°)")
 # Add Coordinates of Study Points
 coord <- subset(Liu,select=c(Long,Lat,AGB,Age))
 map <- map + geom_point(data=coord,aes(x=Long, y=Lat,size=Age),alpha = .5,color="darkblue")  + scale_size_continuous(breaks=c(100,300,500,900,1200),range=c(1,6))# + scale_colour_gradient(low="blue",high="darkred",guide="colourbar") 
+<<<<<<< HEAD
+=======
+map <- map + scale_size_continuous(guide_legend(title = "Age (in years)"))
+>>>>>>> master
 map
 ggsave(filename="Figures/LIU_StudyMap-Size.png",plot=map,width=9,height=4,units="in",dpi=400)
 
@@ -60,8 +81,11 @@ ggsave(filename="Figures/LIU_StudyMap-Size.png",plot=map,width=9,height=4,units=
 Liu_trop <- subset(Liu,(Lat>-23.5&Lat<23.5))
 nrow(Liu_trop)
 max(Liu_trop$Age)
+<<<<<<< HEAD
 =======
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+>>>>>>> master
 
 #looking at these histograms I wouldn't be happy to make predictions
 #about biomass in forests of Age >500 years, Temp <-5 or >20, or precip >3000
@@ -71,6 +95,9 @@ hist(Liu_subset$Age)
 hist(Liu_subset$Mean_T)
 hist(Liu_subset$Mean_precip)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> master
 hist(Liu_subset$AGB)
 
 # Correlation between Predictors
@@ -84,9 +111,12 @@ pairs.panels(Liu[,c(4:8,11)]) # Correlations between Predictors
 # Although statistically reasonable this really limits our direct comparison with Liu et al.s 
 # Models, which is why I will use the whole dataset in the following analysis and investigate 
 # the influence of those poorly sampled regions, respectively 
+<<<<<<< HEAD
 =======
 
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+>>>>>>> master
 
 #start models - these models are similar to those of liu et al
 #considering everything independantly to each other
@@ -95,10 +125,14 @@ pairs.panels(Liu[,c(4:8,11)]) # Correlations between Predictors
 
 #first we fit a dummy random variable
 <<<<<<< HEAD
+<<<<<<< HEAD
 Liu_subset$dummy<-rep(1,nrow(Liu_subset))
 =======
 Liu_subset$dummy<-rep(1,501)
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+Liu_subset$dummy<-rep(1,nrow(Liu_subset))
+>>>>>>> master
 
 #now build in spatial autocorrelation
 
@@ -110,8 +144,12 @@ cs1Exp <- Initialize(cs1Exp, Liu_subset)
 corMatrix(cs1Exp)[1:10, 1:4]
 
 #first run some null models to check our random
+<<<<<<< HEAD
 #variable structure is appropriate
 <<<<<<< HEAD
+=======
+#variable structure is appropriateb
+>>>>>>> master
 null.model<-lme(log(AGB)~1,data=Liu_subset,random=~1|dummy,method="ML")
 null.model2<-lme(log(AGB)~1,data=Liu_subset,random=~1|Ref,method="ML")
 null.model3<-lme(log(AGB)~1,data=Liu_subset,random=~1|Ref/Site,method="ML")
@@ -123,6 +161,7 @@ null.model6<- update(null.model, correlation = corExp(1, form = ~ Lat_J + Long),
        modnames=c("Null - w/o Random","Null - w. Random","Null - w. nested Random","Null - w. Random + SAC","Null - w. nested Random + SAC","Null - w/o Random + SAC")) )
 
 aictab(list(null.model,null.model2),modnames=c("null","Null+SAC"),second.order=F)
+<<<<<<< HEAD
 write.csv(nm_out,"Results/NullModel.Comparison.csv",row.names=F)
 =======
 null.model<-lme(log(AGB)~1,data=Liu_subset,random=~1|dummy)
@@ -130,12 +169,20 @@ null.model2<-lme(log(AGB)~1,data=Liu_subset,random=~1|Ref)
 null.model3<- update(null.model2, correlation = corExp(1, form = ~ Lat_J + Long))
 AICc(null.model,null.model2,null.model3)
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+r.squaredLR(null.model2,null = null.model)
+
+write.csv(nm_out,"Results/NullModel.Comparison.csv",row.names=F)
+>>>>>>> master
 
 #fitting a model that accounts for between study differences is better
 #and we NEED to account for spatial autocorrelation for our results to
 #be statistically valid
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> master
 #### LIUs Model ####
 #Following part is to show that even with included random factor and taking SAC
 #into account the models perform bad if interaction effects are not considered
@@ -188,6 +235,7 @@ All_model<-lme(log(AGB)~Age*Mean_precip*Mean_T*Age_sq,data=Liu_subset,random=~1|
 #can be assessed rather than using them in isolation
 
 MS1<-dredge(All_model,evaluate=T,rank=AICc,trace=T,subset=dc(Age,Age_sq))
+<<<<<<< HEAD
 =======
 #now let's fit the models that Liu et al used for: 
 #precipitation - a model with a squared term for mean_precip
@@ -212,11 +260,16 @@ plot(All_model)
 #can be assessed rather than using them in isolation
 MS1<-dredge(All_model,evaluate=T,rank=AICc,trace=T,subset=dc(Age,Age_sq),REML=F)
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+>>>>>>> master
 poss_mod<-get.models(MS1,subset=delta<7)
 modsumm<- model.sel(poss_mod, rank = "AICc",fit=T)
 modsumm2<-subset(modsumm,modsumm$delta<7)
 modsumm2
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> master
 averaged<-model.avg(modsumm2,cumsum(weight)<=.95,fit=T)
 
 #run the top model from the model averaging to get
@@ -230,10 +283,15 @@ Age_model<-lme(log(AGB)~Age+I(Age^2),data=Liu_subset,random=~1|Ref/Site,correlat
 # Our Model performs best.
 # Include results of LR-ratio test against null model
 out$adj.r.squared <- unlist(lapply(list(top_model,Precip_model,Temp_model,Age_model),FUN=function(x)attr(r.squaredLR(x,null=null.model5),"adj.r.squared")) )
+<<<<<<< HEAD
+=======
+out <- as.data.frame(out)
+>>>>>>> master
 write.csv(out,"Results/FinalModelComparison.csv",row.names=F)
 
 #### Figures ####
 Liu_subset$pred <- NA # For the Rug
+<<<<<<< HEAD
 =======
 averaged<-model.avg(modsumm2,fit=T)
 
@@ -254,6 +312,8 @@ write.csv(AICc_table,"Model_comp.csv",row.names=F)
 
 
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+>>>>>>> master
 #create dataframe for predictions so paramaters can be plotted
 #first - Age
 nseq <- function(x, len = length(x)) seq(min(x, na.rm = TRUE),
@@ -262,6 +322,9 @@ str(Liu_subset)
 newdata_Age1<- as.data.frame(lapply(lapply(Liu_subset[c(6,7,11,15)], mean), rep, 300))
 newdata_Age1$Age<- nseq(Liu_subset$Age, nrow(newdata_Age1))
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> master
 newdata_Age1$Age_sq<- newdata_Age1$Age^2
 newdata_Age1$Mean_T<-0
 newdata_Age1$pred<-predict(top_model,newdata_Age1,level=0)
@@ -275,6 +338,7 @@ newdata_Age3$Age<- nseq(Liu_subset$Age, nrow(newdata_Age3))
 newdata_Age3$Age_sq<- newdata_Age3$Age^2
 newdata_Age3$Mean_T<-10
 newdata_Age3$pred<-predict(top_model,newdata_Age3,level=0)
+<<<<<<< HEAD
 =======
 newdata_Age1$Age_sq<- newdata_Age$Age^2
 newdata_Age1$Mean_T<-0
@@ -290,6 +354,8 @@ newdata_Age3$Age_sq<- newdata_Age$Age^2
 newdata_Age3$Mean_T<-10
 newdata_Age3$pred<-predict(top_model,newdata_Age,level=0)
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+>>>>>>> master
 
 newdata_Age<-rbind(newdata_Age1,newdata_Age2,newdata_Age3)
 
@@ -306,14 +372,22 @@ newdata_Age$SE <- sqrt(predvar)
 newdata_Age$SE2 <- sqrt(predvar+top_model$sigma^2)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 names(newdata_Age)
 #now plot the predictions for Age
 theme_set(theme_classic(base_size=12,base_family = "sans"))
 Age_plot <- ggplot(data=newdata_Age,aes(x=Age,y=exp(pred),group=as.factor(Mean_T),colour=as.factor(Mean_T)))
+=======
+names(newdata_Age)
+#now plot the predictions for Age
+theme_set(theme_classic(base_size=12,base_family = "sans"))
+Age_plot <- ggplot(data=newdata_Age,aes(x=Age,y=exp(pred),group=as.factor(Mean_T),color=as.factor(Mean_T)))
+>>>>>>> master
 Age_plot <- Age_plot+geom_line(data=newdata_Age,aes(y=exp(Liu_pred),group=NULL),colour="black",lty=2,size=2,lineend="round") + geom_rug(data = Liu_subset,side="b",color="black",show_guide=F)
 Age_plot2 <- Age_plot + geom_line(size=2,lineend="round")
 #Age_plot3 <- Age_plot2+theme(panel.grid.major = element_line(colour =NA),panel.grid.minor = element_line(colour =NA),panel.border = element_rect(size=1.5,colour="black",fill=NA))
 Age_plot4 <- Age_plot2+ylab(expression(paste("Aboveground \nbiomass (Mg ",ha^-1,")")))+xlab("Age (Years)") 
+<<<<<<< HEAD
 Age_plot5 <- Age_plot4+scale_colour_brewer(expression("Mean annual\ntemperature("*degree*C*")"),palette="Set1")
 Age_plot5
 ggsave(filename="Figures/Age_temp.png",plot=Age_plot5,width=9,height=4,units="in",dpi=400)
@@ -329,6 +403,13 @@ Age_plot5<-Age_plot4+scale_colour_brewer(expression("Mean annual\ntemperature("*
 Age_plot5
 ggsave(filename="Age_temp.png",width=9,height=4,units="in",dpi=400)
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+Age_plot5 <- Age_plot5+scale_colour_brewer(expression("Mean annual\ntemperature("*degree*C*")"),palette="Dark2")
+Age_plot5
+ggsave(filename="Figures/Age_temp.png",plot=Age_plot5,width=9,height=4,units="in",dpi=400)
+
+
+>>>>>>> master
 
 #now make predictions for Temp
 plot(Liu_subset$Age,Liu_subset$Mean_T)
@@ -338,11 +419,15 @@ newdata_Temp1$Age<-100
 newdata_Temp1$Age_sq<-newdata_Temp1$Age^2
 newdata_Temp2<- as.data.frame(lapply(lapply(Liu_subset[c(6,7,11,15)], mean), rep, 300))
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> master
 newdata_Temp2$Mean_T<- nseq(Liu_subset$Mean_T, nrow(newdata_Temp2))
 newdata_Temp2$Age<-150
 newdata_Temp2$Age_sq<-newdata_Temp2$Age^2
 newdata_Temp3<- as.data.frame(lapply(lapply(Liu_subset[c(6,7,11,15)], mean), rep, 300))
 newdata_Temp3$Mean_T<- nseq(Liu_subset$Mean_T, nrow(newdata_Temp3))
+<<<<<<< HEAD
 =======
 newdata_Temp2$Mean_T<- seq(from=-5,to=15,length.out=nrow(newdata_Temp3))
 newdata_Temp2$Age<-150
@@ -350,6 +435,8 @@ newdata_Temp2$Age_sq<-newdata_Temp2$Age^2
 newdata_Temp3<- as.data.frame(lapply(lapply(Liu_subset[c(6,7,11,15)], mean), rep, 300))
 newdata_Temp3$Mean_T<- seq(from=-5,to=5, length.out=nrow(newdata_Temp3))
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+>>>>>>> master
 newdata_Temp3$Age<-200
 newdata_Temp3$Age_sq<-newdata_Temp3$Age^2
 newdata_Temp<-rbind(newdata_Temp1,newdata_Temp2,newdata_Temp3)
@@ -366,12 +453,19 @@ plot(newdata_Temp$Mean_T,exp(newdata_Temp$pred))
 
 #now plot the predictions for Temp
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> master
 theme_set(theme_classic(base_size=12,base_family = "sans"))
 Temp_plot<-ggplot(data=newdata_Temp,aes(x=Mean_T,y=exp(pred),group=as.factor(Age),colour=as.factor(Age)))
 Temp_plot2<-Temp_plot+geom_line(data=newdata_Temp,aes(y=exp(Liu_pred)),colour="black",lty=2,size=2) +geom_line(size=2,guide="legend") + geom_rug(data = Liu_subset,side="b",color="black",show_guide=F)
 #Temp_plot3<-Temp_plot2+theme(panel.grid.major = element_line(colour =NA),panel.grid.minor = element_line(colour =NA),panel.border = element_rect(size=1.5,colour="black",fill=NA))
 Temp_plot4 <- Temp_plot2+ylab(expression(paste("Aboveground \nbiomass (Mg ",ha^-1,")")))+xlab("Mean annual temperature (in °C)")
+<<<<<<< HEAD
 Temp_plot5 <- Temp_plot4 + scale_colour_brewer("Age \n(Years)",palette="Set1")
+=======
+Temp_plot5 <- Temp_plot4 + scale_colour_brewer("Age \n(Years)",palette="Dark2")
+>>>>>>> master
 Temp_plot5 <- Temp_plot5 + ggtitle("Effect of Temperature")
 Temp_plot5   
 ggsave(filename="Figures/Temp_age.png",plot=Temp_plot5,width=9,height=4,units="in",dpi=400)
@@ -379,6 +473,7 @@ ggsave(filename="Figures/Temp_age.png",plot=Temp_plot5,width=9,height=4,units="i
 #now predictions for changes in precipitation
 newdata_P<- as.data.frame(lapply(lapply(Liu_subset[c(6,7,11,15)], mean), rep, 300))
 newdata_P$Mean_precip<- nseq(Liu_subset$Mean_precip, nrow(newdata_P))
+<<<<<<< HEAD
 =======
 theme_set(theme_bw(base_size=10))
 Temp_plot<-ggplot(data=newdata_Temp,aes(x=Mean_T,y=exp(pred),group=as.factor(Age),colour=as.factor(Age)))+geom_line(size=2)
@@ -392,6 +487,8 @@ ggsave(filename="Temp_age.png",width=9,height=4,units="in",dpi=400)
 newdata_P<- as.data.frame(lapply(lapply(Liu_subset[c(6,7,11,15)], mean), rep, 300))
 newdata_P$Mean_precip<- nseq(Liu_subset$Mean_precip, nrow(newdata_P1))
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+>>>>>>> master
 
 #now use predict
 newdata_P$pred<-predict(top_model,newdata_P,level=0)
@@ -401,6 +498,9 @@ newdata_P$Liu_pred<-predict(Precip_model,newdata_P,level=0)
 
 #now plot
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> master
 theme_set(theme_classic(base_size=12,base_family = "sans"))
 Temp_plot<-ggplot(data=newdata_P,aes(x=Mean_precip,y=exp(pred)))+geom_line(size=2)
 Temp_plot2<-Temp_plot+geom_line(data=newdata_P,aes(y=exp(Liu_pred)),colour="black",lty=2,size=2) + geom_rug(data = Liu_subset,side="b",color="black",show_guide=F)
@@ -439,7 +539,11 @@ Precip_plot<-ggplot(data=newdata_Precip,aes(x=Mean_precip,y=exp(pred),group=as.f
 Precip_plot2<-Precip_plot+geom_line(data=newdata_Precip,aes(y=exp(Liu_pred)),colour="black",lty=2,size=2) +geom_line(size=2)+ geom_rug(data = Liu_subset,side="b",color="black",show_guide=F)
 #Temp_plot3<-Temp_plot2+theme(panel.grid.major = element_line(colour =NA),panel.grid.minor = element_line(colour =NA),panel.border = element_rect(size=1.5,colour="black",fill=NA))
 Precip_plot4 <- Precip_plot2+xlab("Mean annual precipitation (mm)")+ylab("")#+ylab(expression(paste("Aboveground \nbiomass (Mg ",ha^-1,")")))
+<<<<<<< HEAD
 Precip_plot5 <- Precip_plot4 + scale_colour_brewer("Age \n(Years)",palette="Set1") + theme(legend.position="bottom")
+=======
+Precip_plot5 <- Precip_plot4 + scale_colour_brewer("Age \n(Years)",palette="Dark2") + theme(legend.position="bottom")
+>>>>>>> master
 Precip_plot5 <- Precip_plot5 + ggtitle("Effect of Precipitation")
 Precip_plot5  
 ggsave(filename="Figures/Precip_age.png",plot=Precip_plot5,width=9,height=4,units="in",dpi=400)
@@ -462,6 +566,7 @@ grid.arrange(arrangeGrob(Temp_plot5 + theme(legend.position="none"),
                    mylegend, nrow=2,heights=c(10, 1))
 dev.off()
 
+<<<<<<< HEAD
 =======
 theme_set(theme_bw(base_size=10))
 Temp_plot<-ggplot(data=newdata_P,aes(x=Mean_precip,y=exp(pred)))+geom_line(size=2)
@@ -473,3 +578,5 @@ Temp_plot4<-Temp_plot3+ylab(expression(paste("Aboveground\n biomass (Mg ",ha^-1,
 Temp_plot4
 ggsave(filename="Precipitation.png",width=9,height=4,units="in",dpi=400)
 >>>>>>> a8cf70aa1cf6548b832224134b17a7e862e1a2cd
+=======
+>>>>>>> master
