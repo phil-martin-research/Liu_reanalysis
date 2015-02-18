@@ -70,8 +70,8 @@ Liu_subset$dummy<-rep(1,nrow(Liu_subset))
 
 #### ReAnalysis - Nullmodels####
 
-# We start modeling and build models imilar to those of liu et al (OLS) mentioned in the Appendix
-# We considering everything independantly to each other but using our random variable structure to account for
+# We start modeling and build models similar to those of liu et al (OLS) mentioned in the Appendix
+# We considering everything independently to each other but using our random variable structure to account for
 # spatial autocorrelation and any systematic differences amongst studies
 
 # First build a spatial correlation Matrix
