@@ -4,7 +4,9 @@
 ##################################
 
 #read in data
-setwd("C:/Users/Phil/Documents/My Dropbox/Work/PhD/Publications, Reports and Responsibilities/Publications/Liu_et_al/Liu_reanalysis")
+library(gdata)
+Liu <- read.xls("Data/geb12113-sup-0001-ts1.xlsx",sheet=1)
+Liu<-read.csv("Data/Liu_et_al.csv",header=T)
 Liu<-read.csv("Liu_et_al.csv")
 
 #subset to give only columns of interest
