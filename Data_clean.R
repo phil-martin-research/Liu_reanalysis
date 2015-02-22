@@ -4,7 +4,7 @@
 ##################################
 
 #read in data
-setwd("C:/Users/Phil/Documents/My Dropbox/Work/PhD/Publications, Reports and Responsibilities/Publications/Liu_et_al/Liu_reanalysis")
+setwd("C:/Users/Phil/Dropbox/Work/PhD/Publications, Reports and Responsibilities/Publications/Liu_et_al")
 Liu<-read.csv("Liu_et_al.csv")
 
 #subset to give only columns of interest

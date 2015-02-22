@@ -8,24 +8,28 @@ library(ape)
 library(cshapes)
 library(MuMIn)
 library(mgcv)
+library(geoR)
+
 
 #read in data
-setwd("C:/Users/Phil/Documents/My Dropbox/Work/PhD/Publications, Reports and Responsibilities/Publications/Liu_et_al/Liu_reanalysis/Data")
-Liu<-read.csv("Liu_Aged.csv")
+setwd("C:/Users/Phil/Dropbox/Work/PhD/Publications, Reports and Responsibilities/Publications/Liu_et_al/Liu_reanalysis/Data")
+Liu<-read.csv("Liu_aged.csv")
+head(Liu)
+
+#subset data to only include sites with ages
+Liu_sub<-subset(Liu,Age>0)
+
+Liu_sub$Biome<-ifelse(abs(Liu_sub$Lat)<23.5,"Tropical",NA)
+Liu_sub$Biome<-ifelse(abs(Liu_sub$Lat)>23.5&abs(Liu_sub$Lat)<50,"Temperate",Liu_sub$Biome)
+Liu_sub$Biome<-ifelse(abs(Liu_sub$Lat)>50,"Boreal",Liu_sub$Biome)
+
+ggplot(data=Liu_sub,aes(y=Age,x=Biome,colour=Biome))+geom_boxplot(size=1)+ coord_trans(y = "log10")+scale_y_continuous(breaks=c(100,200,300,400,500,600,700,800,1200))
+
 head(Liu)
 
 hist(Liu$Age)
 hist(Liu$Mean_T)
 hist(Liu$Mean_precip)
-
-#looking at these histograms I wouldn't be happy to make predictions
-#about biomass in forests of Age >500 years, Temp <-5 or >20, or precip >3000
-#so I will subset the data to remove these
-Liu_subset<-subset(Liu,Age<400&Mean_T>-5&Mean_T<20&Mean_precip<3000)
-hist(Liu_subset$Age)
-hist(Liu_subset$Mean_T)
-hist(Liu_subset$Mean_precip)
-
 
 #start models - these models are similar to those of liu et al
 #considering everything independantly to each other
@@ -33,21 +37,37 @@ hist(Liu_subset$Mean_precip)
 #spatial autocorrelation and any systematic differences amongst studies
 
 #first we fit a dummy random variable
-Liu_subset$dummy<-rep(1,501)
+Liu$dummy<-rep(1,572)
 
 #now build in spatial autocorrelation
 
+
 #change coordinates slightly since some sites 
 #have exactly the same coordinates
-Liu_subset$Lat_J<-Liu_subset$Lat+(rnorm(length(Liu_subset$Lat),0,0.00001)) 
+Liu$Lat_J<-Liu$Lat+(rnorm(length(Liu$Lat),0,0.00001)) 
 cs1Exp <- corExp(1, form = ~ Lat_J + Long)
-cs1Exp <- Initialize(cs1Exp, Liu_subset)
+cs1Exp <- Initialize(cs1Exp, Liu)
 corMatrix(cs1Exp)[1:10, 1:4]
 
+
+#produce variogram to examine spatial autocorrelation
+head(Liu)
+dists<-dist(cbind(Liu[,5],Liu[,17]))
+summary(dists)
+breaks<-seq(0, 325,by = 5)
+v1 <- variog(coords = cbind(Liu[,5],Liu[,17]), data = Liu[,8], breaks = breaks)
+
+
+plot(v1, type="b")
+
+v1.summary <- cbind(v1$v, v1$n)
+colnames(v1.summary) <- c("lag", "semi-variance", "# of pairs")
+
+v1.summary
 #first run some null models to check our random
 #variable structure is appropriate
-null.model<-lme(log(AGB)~1,data=Liu_subset,random=~1|dummy)
-null.model2<-lme(log(AGB)~1,data=Liu_subset,random=~1|Ref)
+null.model<-lme(log(AGB)~1,data=Liu,random=~1|dummy)
+null.model2<-lme(log(AGB)~1,data=Liu,random=~1|Ref)
 null.model3<- update(null.model2, correlation = corExp(1, form = ~ Lat_J + Long))
 AICc(null.model,null.model2,null.model3)
 
@@ -57,20 +77,20 @@ AICc(null.model,null.model2,null.model3)
 
 #now let's fit the models that Liu et al used for: 
 #precipitation - a model with a squared term for mean_precip
-Precip_model<-lme(log(AGB)~Mean_precip+I(Mean_precip^2),data=Liu_subset,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
+Precip_model<-lme(log(AGB)~Mean_precip+I(Mean_precip^2),data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
 
 #Temperature
-Temp_model<-lme(log(AGB)~Mean_T+I(Mean_T^2)+I(Mean_T^3),data=Liu_subset,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
+Temp_model<-lme(log(AGB)~Mean_T+I(Mean_T^2)+I(Mean_T^3),data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
 
 #Age
-Age_model<-lme(log(AGB)~Age+I(Age^2),data=Liu_subset,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
+Age_model<-lme(log(AGB)~Age+I(Age^2),data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
 
 #now a global model for use in model averaging
 #that contains all varibles that are needed
 #I haven't included the squared and cubed terms for temp
 #and precipitation becuase I don't think they make biological
 #sense
-All_model<-lme(log(AGB)~Age*Mean_precip*Mean_T*Age_sq,data=Liu_subset,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
+All_model<-lme(log(AGB)~Age*Mean_precip*Mean_T+Age_sq,data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
 
 plot(All_model)
 
@@ -85,7 +105,7 @@ averaged<-model.avg(modsumm2,fit=T)
 
 #run the top model from the model averaging to get
 #r squared statistic
-top_model<-lme(log(AGB)~Age+Mean_precip+Age*Mean_T+Age_sq,data=Liu_subset,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
+top_model<-lme(log(AGB)~Age+Mean_precip*Mean_T+Age_sq,data=Liu,random=~1|Ref,correlation = corExp(1, form = ~ Lat_J + Long))
 
 
 #create table of different model AICc, AICc delta and marginal R squared
@@ -104,18 +124,18 @@ write.csv(AICc_table,"Model_comp.csv",row.names=F)
 nseq <- function(x, len = length(x)) seq(min(x, na.rm = TRUE),
     max(x, na.rm=TRUE), length = len)
 str(Liu_subset)
-newdata_Age1<- as.data.frame(lapply(lapply(Liu_subset[c(6,7,11,15)], mean), rep, 300))
-newdata_Age1$Age<- nseq(Liu_subset$Age, nrow(newdata_Age1))
+newdata_Age1<- as.data.frame(lapply(lapply(Liu[c(6,7,11,15)], mean), rep, 300))
+newdata_Age1$Age<- nseq(Liu$Age, nrow(newdata_Age1))
 newdata_Age1$Age_sq<- newdata_Age$Age^2
 newdata_Age1$Mean_T<-0
 newdata_Age1$pred<-predict(top_model,newdata_Age,level=0)
-newdata_Age2<- as.data.frame(lapply(lapply(Liu_subset[c(6,7,11,15)], mean), rep, 300))
-newdata_Age2$Age<- nseq(Liu_subset$Age, nrow(newdata_Age1))
+newdata_Age2<- as.data.frame(lapply(lapply(Liu[c(6,7,11,15)], mean), rep, 300))
+newdata_Age2$Age<- nseq(Liu$Age, nrow(newdata_Age1))
 newdata_Age2$Age_sq<- newdata_Age$Age^2
 newdata_Age2$Mean_T<-5
 newdata_Age2$pred<-predict(top_model,newdata_Age,level=0)
-newdata_Age3<- as.data.frame(lapply(lapply(Liu_subset[c(6,7,11,15)], mean), rep, 300))
-newdata_Age3$Age<- nseq(Liu_subset$Age, nrow(newdata_Age1))
+newdata_Age3<- as.data.frame(lapply(lapply(Liu[c(6,7,11,15)], mean), rep, 300))
+newdata_Age3$Age<- nseq(Liu$Age, nrow(newdata_Age1))
 newdata_Age3$Age_sq<- newdata_Age$Age^2
 newdata_Age3$Mean_T<-10
 newdata_Age3$pred<-predict(top_model,newdata_Age,level=0)
