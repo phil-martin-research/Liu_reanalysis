@@ -227,9 +227,9 @@ AP_pred<-data.frame(rbind(data.frame(Age=seq(80,795,1),Mean_precip=1000,Mean_T2=
                data.frame(Age=seq(80,1200,1),Mean_precip=2000,Mean_T2=mean(Liu$Mean_T2)),
                data.frame(Age=seq(80,750,1),Mean_precip=3000,Mean_T2=mean(Liu$Mean_T2))))
 AP_pred$Age_sq<-AP_pred$Age^2
-AP_pred$Pred<-predict(averaged,AP_pred,level=0,se.fit=T)$fit 
-AP_pred$UCI<-AP_pred$Pred+(predict(averaged,AP_pred,level=0,se.fit=T)$se.fit*2)
-AP_pred$LCI<-AP_pred$Pred-(predict(averaged,AP_pred,level=0,se.fit=T)$se.fit*2)
+AP_pred$Pred<-predict(top_model,AP_pred,level=0,se.fit=T)$fit 
+AP_pred$UCI<-AP_pred$Pred+(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
+AP_pred$LCI<-AP_pred$Pred-(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
 
 # Plot predictions
 theme_set(theme_bw(base_size=12))
@@ -251,45 +251,42 @@ AT_pred <- data.frame(rbind(data.frame(Age=seq(80,1200,1),Mean_precip=mean(Liu$M
                           data.frame(Age=seq(80,200,1),Mean_precip=mean(Liu$Mean_precip),Mean_T=20)))
 AT_pred$Age_sq<-AT_pred$Age^2
 AT_pred$Mean_T2<-AT_pred$Mean_T+17
-AT_pred$Pred<-predict(averaged,AT_pred,level=0,se.fit=T)$fit
-AT_pred$UCI<-AT_pred$Pred+(predict(averaged,AT_pred,level=0,se.fit=T)$se.fit*2)
-AT_pred$LCI<-AT_pred$Pred-(predict(averaged,AT_pred,level=0,se.fit=T)$se.fit*2)
+AT_pred$Pred<-predict(top_model,AT_pred,level=0,se.fit=T)$fit
+AT_pred$UCI<-AT_pred$Pred+(predict(top_model,AT_pred,level=0,se.fit=T)$se.fit*2)
+AT_pred$LCI<-AT_pred$Pred-(predict(top_model,AT_pred,level=0,se.fit=T)$se.fit*2)
 
 Temp_Age1 <- ggplot(AT_pred,aes(Age,exp(Pred),ymax=exp(UCI),ymin=exp(LCI),group=as.factor(Mean_T),fill=as.factor(Mean_T)))+geom_line()+geom_ribbon(alpha=0.5)
 Temp_Age2 <- Temp_Age1+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(size=1.5,colour="black",fill=NA))+ theme(legend.position="none")+facet_wrap(~Mean_T,scales = "free_x")
-Temp_Age3 <- Temp_Age2+scale_fill_brewer(palette = "Set1")+geom_rug(data=Liu_Temp,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL))+geom_point(data=Liu_Temp,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL),shape=1,alpha=0.2) +
-  scale_x_continuous(limits = c(0,750))
+Temp_Age3 <- Temp_Age2+scale_fill_brewer(palette = "Set1")+geom_rug(data=Liu_Temp,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL))+geom_point(data=Liu_Temp,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL),shape=1,alpha=0.2)
 Temp_Age3 <- Temp_Age3 + labs(y = expression(paste("Aboveground biomass (Mg ",ha^-1,")",sep="")),
                               x = "Estimated forest age")
-Temp_Age3
 ggsave("Figures/Age_Temp.png",plot = Temp_Age3,height=3,width=8,dpi=800,units="in")
 
 #now temperature and precipitation
-Liu_Temp<-subset(Liu,Tempbin>=10&Tempbin<=20)
-Liu_Temp$Mean_T<-Liu_Temp$Tempbin
+Liu_Temp<-subset(Liu,Tempbin>=0&Tempbin<=20)
+Liu_Temp$Mean_T <- Liu_Temp$Tempbin
 
 ddply(Liu,.(Tempbin),summarize,minp=min(Mean_precip),maxp=max(Mean_precip),no=length(Mean_precip))
 
-AP_pred<-data.frame(rbind(data.frame(Age=mean(Liu$Age),Mean_precip=seq(352,1937,1),Mean_T=0),
-                          data.frame(Age=mean(Liu$Age),Mean_precip=seq(355,3669),Mean_T=10),
-                          data.frame(Age=mean(Liu$Age),Mean_precip=seq(707,2500),Mean_T=20)))
+AP_pred<-data.frame(rbind(data.frame(Age=mean(Liu$Age),Mean_precip=seq(0,3000,1),Mean_T=0),
+                          data.frame(Age=mean(Liu$Age),Mean_precip=seq(0,3700,1),Mean_T=10),
+                          data.frame(Age=mean(Liu$Age),Mean_precip=seq(0,5800,1),Mean_T=20)))
+
 AP_pred$Age_sq<-AP_pred$Age^2
 AP_pred$Mean_T2<-AP_pred$Mean_T+17
-AP_pred$Pred<-predict(averaged,AP_pred,level=0,se.fit=T)$fit
-AP_pred$UCI<-AP_pred$Pred+(predict(averaged,AP_pred,level=0,se.fit=T)$se.fit*2)
-AP_pred$LCI<-AP_pred$Pred-(predict(averaged,AP_pred,level=0,se.fit=T)$se.fit*2)
+AP_pred$Pred<-predict(top_model,AP_pred,level=0,se.fit=T)$fit
+AP_pred$UCI<-AP_pred$Pred+(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
+AP_pred$LCI<-AP_pred$Pred-(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
 
 #now plot this
 theme_set(theme_bw(base_size=12))
-Temp_precip1<-ggplot(AP_pred,aes(Mean_precip,exp(Pred),ymax=exp(UCI),ymin=exp(LCI),group=as.factor(Mean_T),fill=as.factor(Mean_T)))+geom_line()+geom_ribbon(alpha=0.5)
-Temp_precip2<-Temp_precip1+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(size=1.5,colour="black",fill=NA))+ theme(legend.position="none")+facet_wrap(~Mean_T,scales = "free_x")
-Temp_precip3<-Temp_precip2+scale_fill_brewer(palette = "Set1")+geom_rug(data=Liu_Temp,aes(x=Mean_precip,y=AGB,ymax=NULL,ymin=NULL,fill=NULL))+geom_point(data=Liu_Temp,aes(x=Mean_precip,y=AGB,ymax=NULL,ymin=NULL,fill=NULL),shape=1,alpha=0.2)+xlim(0,4000)
-Temp_precip3+ylab(expression(paste("Aboveground biomass (Mg ",ha^-1,")",sep="")))+xlab("Mean annual precipitation (mm)")
+Temp_precip1 <- ggplot(AP_pred,aes(Mean_precip,exp(Pred),ymax=exp(UCI),ymin=exp(LCI),group=as.factor(Mean_T),fill=as.factor(Mean_T)))+geom_line()+geom_ribbon(alpha=0.5)
+Temp_precip2 <- Temp_precip1 + theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(size=1.5,colour="black",fill=NA))+ theme(legend.position="none")+facet_wrap(~Mean_T,scales = "free_x")
+Temp_precip3 <- Temp_precip2 + scale_fill_brewer(palette = "Set1")+geom_rug(data=Liu_Temp,aes(x=Mean_precip,y=AGB,ymax=NULL,ymin=NULL,fill=NULL))+geom_point(data=Liu_Temp,aes(x=Mean_precip,y=AGB,ymax=NULL,ymin=NULL,fill=NULL),shape=1,alpha=0.2)
+Temp_precip3 <- Temp_precip3 + labs(y=expression(paste("Aboveground biomass (Mg ",ha^-1,")",sep="")),
+                                   x= "Mean annual precipitation (mm)")
+ggsave("Figures/Temp_Precip.png",plot=Temp_precip3,height=5,width=8,dpi=800,units="in")
 
-ggsave("Figures/Temp_Precip.png",height=5,width=8,dpi=800,units="in")
-
-
-
-# Spatial look
-r <- residuals(top_model)
-base_world+geom_point(data=Liu,aes(x=Long,y=Lat,size=sqrt(r^2)),color="blue")
+# Spatial look 
+#r <- residuals(top_model)
+#base_world+geom_point(data=Liu,aes(x=Long,y=Lat,size=sqrt(r^2)),color="blue")
