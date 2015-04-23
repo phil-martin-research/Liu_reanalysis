@@ -145,18 +145,20 @@ g
 # Squared and cubed terms temperature and precipitation are not included due to missing biological sense
 
 vf1 <- varFunc(~Mean_T)
-Liu$Mean_T2<-Liu$Mean_T+17 # Why no minus temperatures?
+Liu$Mean_T2<-Liu$Mean_T+17 
 Liu$logAge<-log(Liu$Age)
 Liu$Age_sq<-Liu$Age^2
 
 mymodel<-lme(AGB~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip+Age_sq+logAge*Mean_precip+logAge*Mean_T2,
              data=Liu,
              random=~1|Ref/Site,
-             weights=varFixed(~Mean_T2), 
-             # Iam not quite sure why you use this as weight? 
-             # Do we expect the variance of AGB to be depenent of Temperature?
+             weights=varFixed(~Mean_T2),
              correlation = corExp(1, form = ~ Lat_J + Long),
              method="ML")
+
+# Check for heteroskedasticity
+plot(mymodel, which=2) # Somewhat greater spread at higher AGB, but generally only 3 points are problematic
+plot(ranef(mymodel)) # seem okay
 
 qplot(Liu$Age,resid(mymodel))+geom_smooth()
 qplot(Liu$Mean_T2,resid(mymodel))+geom_smooth()
@@ -175,6 +177,8 @@ modsumm2 <- subset(modsumm,modsumm$delta<7)
 modsumm2
 averaged <- model.avg(modsumm2,fit=T,subset=delta<7)
 
+## MJ - COMMENT: The above model selection does not kickout log-terms for me?
+## version: nlme_3.1-120 | MuMIn_1.13.4
 # since the model without log terms comes out best, rerun the model averaging
 # routine without this the log term
 mymodel2<-lme(log(AGB)~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip,
