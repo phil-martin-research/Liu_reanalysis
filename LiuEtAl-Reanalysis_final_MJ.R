@@ -152,7 +152,7 @@ Liu$Age_sq<-Liu$Age^2
 mymodel<-lme(AGB~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip+Age_sq+logAge*Mean_precip+logAge*Mean_T2,
              data=Liu,
              random=~1|Ref/Site,
-             weights=varFixed(~Mean_T2),
+             weights=varFunc(~I(1/Mean_T2)),
              correlation = corExp(1, form = ~ Lat_J + Long),
              method="ML")
 
@@ -170,7 +170,7 @@ qqnorm(mymodel,abline = c(0, 1))
 # Now we dredge the model so that the value of each variable in predicting biomass
 # can be assessed rather than using them in isolation
 # Use second-order Information Criterion and keep Age as explanatory variable
-MS1 <- dredge(mymodel,evaluate=T,rank=AICc,trace=T,REML=F,subset = !(Age && logAge)&&dc(Age,Age_sq))
+MS1 <- dredge(mymodel,evaluate=T,rank=AICc,trace=T,REML=F,subset = !(Age&&logAge) && dc(Age,Age_sq) )
 poss_mod <- get.models(MS1,subset=delta<7)
 modsumm <- model.sel(poss_mod, rank = "AICc",fit=T) # Rank and select the best models
 modsumm2 <- subset(modsumm,modsumm$delta<7)
@@ -179,12 +179,13 @@ averaged <- model.avg(modsumm2,fit=T,subset=delta<7)
 
 ## MJ - COMMENT: The above model selection does not kickout log-terms for me?
 ## version: nlme_3.1-120 | MuMIn_1.13.4
+
 # since the model without log terms comes out best, rerun the model averaging
 # routine without this the log term
 mymodel2<-lme(log(AGB)~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip,
               data=Liu,
               random=~1|Ref/Site,
-              weights=varFixed(~Mean_T2),
+              weights=varFunc(~I(1/Mean_T2)),
               correlation = corExp(1, form = ~ Lat_J + Long),
               method="ML")
 plot(mymodel2)
@@ -231,7 +232,7 @@ AP_pred<-data.frame(rbind(data.frame(Age=seq(80,795,1),Mean_precip=1000,Mean_T2=
                data.frame(Age=seq(80,1200,1),Mean_precip=2000,Mean_T2=mean(Liu$Mean_T2)),
                data.frame(Age=seq(80,750,1),Mean_precip=3000,Mean_T2=mean(Liu$Mean_T2))))
 AP_pred$Age_sq<-AP_pred$Age^2
-AP_pred$Pred<-predict(top_model,AP_pred,level=0,se.fit=T)$fit 
+AP_pred$Pred<-predict(top_model,AP_pred,level=0,se.fit=T,se=T)$fit 
 AP_pred$UCI<-AP_pred$Pred+(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
 AP_pred$LCI<-AP_pred$Pred-(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
 
