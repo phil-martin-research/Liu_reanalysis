@@ -1,10 +1,14 @@
-#### GGMap of study points ####
+# Packages
 library(maps)
+library(sp)
+library(ggmap)
+
+#### GGMap of study points ####
 map("world", fill=TRUE, col="white", bg="lightblue", ylim=c(-60, 90), mar=c(0,0,0,0))
 d <- SpatialPointsDataFrame(cbind(Liu$Long,Liu$Lat),data=data.frame(Liu$Age,Liu$AGB))
 plot(d,color="red",cex=d$Age,pch=21,col="red",add=T)
 
-library(ggmap)
+
 br <- c(100,300,500,900,1200)
 theme_set(theme_classic(base_size=12,base_family = "sans"))
 mapWorld <- borders("world", colour="gray50",fill="gray50") # create a layer of borders
