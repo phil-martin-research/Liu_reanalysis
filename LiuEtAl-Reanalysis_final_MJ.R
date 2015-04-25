@@ -152,7 +152,7 @@ Liu$Age_sq<-Liu$Age^2
 mymodel<-lme(AGB~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip+Age_sq+logAge*Mean_precip+logAge*Mean_T2,
              data=Liu,
              random=~1|Ref/Site,
-             weights=varFunc(~I(1/Mean_T2)),
+             weights=varFixed(~Mean_T2),
              correlation = corExp(1, form = ~ Lat_J + Long),
              method="ML")
 
@@ -232,7 +232,7 @@ AP_pred<-data.frame(rbind(data.frame(Age=seq(80,795,1),Mean_precip=1000,Mean_T2=
                data.frame(Age=seq(80,1200,1),Mean_precip=2000,Mean_T2=mean(Liu$Mean_T2)),
                data.frame(Age=seq(80,750,1),Mean_precip=3000,Mean_T2=mean(Liu$Mean_T2))))
 AP_pred$Age_sq<-AP_pred$Age^2
-AP_pred$Pred<-predict(top_model,AP_pred,level=0,se.fit=T,se=T)$fit 
+AP_pred$Pred<-predict(top_model,AP_pred,level=0,se.fit=T,backtransform=T)$fit 
 AP_pred$UCI<-AP_pred$Pred+(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
 AP_pred$LCI<-AP_pred$Pred-(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
 
