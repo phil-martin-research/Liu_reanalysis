@@ -47,6 +47,8 @@ base_world + geom_point(data=Liu,aes(x=Long,y=Lat,colour=Ref),alpha=0.5)+facet_w
 ## MJ-COMMENT: I would still do that because especially the smaller studies likely also used different
 ## allometric equations and methodologies which could be important to take into account
 
+#PM-COMMENT - Fair point, we can stick with the original method then
+
 # ---------------------------------------------------- #
 # Spatial autocorrelation of Liu et al. original data
 
@@ -166,6 +168,9 @@ qplot(Liu$Mean_precip,resid(mymodel))+geom_smooth()
 qplot(x=fitted(mymodel),y=resid(mymodel))+geom_smooth()
 qqnorm(mymodel,abline = c(0, 1))
 # generally all of this seems to be ok, residuals look fine
+#PM note - see here I would say there is evidence that variance is increasing 
+#as the fitted values increase
+
 
 # Now we dredge the model so that the value of each variable in predicting biomass
 # can be assessed rather than using them in isolation
