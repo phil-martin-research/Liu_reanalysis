@@ -40,6 +40,7 @@ world_map <- map_data("world")#Get world map info
 p <- ggplot() + coord_fixed()#Create a base plot
 base_world <- p + geom_polygon(data=world_map,aes(x=long,y=lat,group=group))#Add map to base plot
 base_world + geom_point(data=Liu,aes(x=Long,y=Lat,colour=Ref),alpha=0.5)+facet_wrap(~Ref,5)
+ggsave("Figures/DataDistribution.png",scale = 1.5,dpi = 300)
 
 # references may focus on particular areas of the globe but the big ones (Luo, 1996; Ma, 2012; Luyassaert et al 2007)
 # come from quite a spread of different locations so I'm not super sure we need to include random effects
@@ -117,25 +118,26 @@ sar.df <- data.frame()
 # Precip
 ncf.cor_precip<- correlog(Liu$Long, Liu$Lat, resid(Precip_model),increment=50, resamp=50,latlon = T)
 ncf.cor_precip_ourmodel<- correlog(Liu$Long, Liu$Lat, resid(Precip_model_sac),increment=50, resamp=50,latlon = T)
-sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_precip$mean.of.class,correlation=ncf.cor_precip$correlation,type="precip_old"))
-sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_precip_ourmodel$mean.of.class,correlation=ncf.cor_precip_ourmodel$correlation,type="precip_new") )
+sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_precip$mean.of.class,correlation=ncf.cor_precip$correlation,type="Precipitation model (with SAR)"))
+sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_precip_ourmodel$mean.of.class,correlation=ncf.cor_precip_ourmodel$correlation,type="Precipitation model (corrected)") )
 
 # Temperature
 ncf.cor_temp<- correlog(Liu$Long, Liu$Lat, resid(Temp_model),increment=50, resamp=50,latlon = T)
 ncf.cor_temp_ourmodel<- correlog(Liu$Long, Liu$Lat, resid(Temp_model_sac),increment=50, resamp=50,latlon = T)
-sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_temp$mean.of.class,correlation=ncf.cor_temp$correlation,type="temp_old"))
-sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_temp_ourmodel$mean.of.class,correlation=ncf.cor_temp_ourmodel$correlation,type="temp_new") )
+sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_temp$mean.of.class,correlation=ncf.cor_temp$correlation,type="Temperature model (with SAR)"))
+sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_temp_ourmodel$mean.of.class,correlation=ncf.cor_temp_ourmodel$correlation,type="Temperature model (corrected)") )
 
 # Age
 ncf.cor_age<- correlog(Liu$Long, Liu$Lat, resid(Age_model),increment=50, resamp=50,latlon = T)
 ncf.cor_age_ourmodel<- correlog(Liu$Long, Liu$Lat, resid(Age_model_sac),increment=50, resamp=50,latlon = T)
-sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_age$mean.of.class,correlation=ncf.cor_age$correlation,type="age_old"))
-sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_age_ourmodel$mean.of.class,correlation=ncf.cor_age_ourmodel$correlation,type="age_new") )
+sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_age$mean.of.class,correlation=ncf.cor_age$correlation,type="Age model (with SAR)"))
+sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_age_ourmodel$mean.of.class,correlation=ncf.cor_age_ourmodel$correlation,type="Age model (corrected)") )
 
 # Plotting
 g <- ggplot(sar.df,aes(x=mean.of.class,y=correlation))
 g <- g + geom_line() + facet_wrap(~type,nrow = 3,as.table = T)
-g
+g <- g + labs(x="Distance class",y="Correlation",title="Correcting for spatial autocorrelation in models")
+ggsave("Figures/SpatialAutocorrelationOfOriginalModelResiduals.png",plot=g,scale = 1.5,dpi=300)
 
 # All models with SAC and random structure perform better than Liu et al. original models
 # and reduce the spatial autocorrelation especially at larger scales!
@@ -146,7 +148,6 @@ g
 # First we build a global model for use in model averaging that contains all varibles that are needed
 # Squared and cubed terms temperature and precipitation are not included due to missing biological sense
 
-vf1 <- varFunc(~Mean_T)
 Liu$Mean_T2<-Liu$Mean_T+17 
 Liu$logAge<-log(Liu$Age)
 Liu$Age_sq<-Liu$Age^2
@@ -154,12 +155,12 @@ Liu$Age_sq<-Liu$Age^2
 mymodel<-lme(AGB~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip+Age_sq+logAge*Mean_precip+logAge*Mean_T2,
              data=Liu,
              random=~1|Ref/Site,
-             weights=varFunc(~I(1/Mean_T2)),
+#             weights=varFixed(~Mean_T2),
              correlation = corExp(1, form = ~ Lat_J + Long),
              method="ML")
 
 # Check for heteroskedasticity
-plot(mymodel, which=2) # Somewhat greater spread at higher AGB, but generally only 3 points are problematic
+plot(mymodel, which=2) # Somewhat greater spread at higher AGB
 plot(ranef(mymodel)) # seem okay
 
 qplot(Liu$Age,resid(mymodel))+geom_smooth()
@@ -175,7 +176,7 @@ qqnorm(mymodel,abline = c(0, 1))
 # Now we dredge the model so that the value of each variable in predicting biomass
 # can be assessed rather than using them in isolation
 # Use second-order Information Criterion and keep Age as explanatory variable
-MS1 <- dredge(mymodel,evaluate=T,rank=AICc,trace=T,REML=F,subset = !(Age&&logAge) && dc(Age,Age_sq) )
+MS1 <- dredge(mymodel,evaluate=T,rank=AICc,trace=T,subset = !(Age&&logAge) && dc(Age,Age_sq) )
 poss_mod <- get.models(MS1,subset=delta<7)
 modsumm <- model.sel(poss_mod, rank = "AICc",fit=T) # Rank and select the best models
 modsumm2 <- subset(modsumm,modsumm$delta<7)
@@ -190,7 +191,7 @@ averaged <- model.avg(modsumm2,fit=T,subset=delta<7)
 mymodel2<-lme(log(AGB)~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip,
               data=Liu,
               random=~1|Ref/Site,
-              weights=varFunc(~I(1/Mean_T2)),
+#              weights=varFunc(~I(1/Mean_T2)),
               correlation = corExp(1, form = ~ Lat_J + Long),
               method="ML")
 plot(mymodel2)
@@ -237,14 +238,14 @@ AP_pred<-data.frame(rbind(data.frame(Age=seq(80,795,1),Mean_precip=1000,Mean_T2=
                data.frame(Age=seq(80,1200,1),Mean_precip=2000,Mean_T2=mean(Liu$Mean_T2)),
                data.frame(Age=seq(80,750,1),Mean_precip=3000,Mean_T2=mean(Liu$Mean_T2))))
 AP_pred$Age_sq<-AP_pred$Age^2
-AP_pred$Pred<-predict(top_model,AP_pred,level=0,se.fit=T,se=T)$fit 
+AP_pred$Pred<-predict(top_model,AP_pred,level=0,se.fit=T,backtransform=T)$fit 
 AP_pred$UCI<-AP_pred$Pred+(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
 AP_pred$LCI<-AP_pred$Pred-(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
 
 # Plot predictions
 theme_set(theme_bw(base_size=12))
 Age_precip1 <- ggplot(AP_pred,aes(Age,exp(Pred),ymax=exp(UCI),ymin=exp(LCI),group=as.factor(Mean_precip),fill=as.factor(Mean_precip)))+geom_line()+geom_ribbon(alpha=0.2)
-Age_precip2 <- Age_precip1+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(size=1.5,colour="black",fill=NA))+ theme(legend.position="none")+facet_wrap(~Mean_precip,scales = "free_x")
+Age_precip2 <- Age_precip1+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(size=1.5,colour="black",fill=NA))+ theme(legend.position="none")+facet_wrap(~Mean_precip)
 Age_precip3 <- Age_precip2+scale_fill_brewer(palette = "Set1")+geom_rug(data=Liu_precip,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL))+geom_point(data=Liu_precip,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL),shape=1,alpha=0.5)
 Age_precip3 <- Age_precip3+labs(y=expression(paste("Aboveground biomass (Mg ",ha^-1,")",sep="")),
                                 x="Estimated forest age")
@@ -266,7 +267,7 @@ AT_pred$UCI<-AT_pred$Pred+(predict(top_model,AT_pred,level=0,se.fit=T)$se.fit*2)
 AT_pred$LCI<-AT_pred$Pred-(predict(top_model,AT_pred,level=0,se.fit=T)$se.fit*2)
 
 Temp_Age1 <- ggplot(AT_pred,aes(Age,exp(Pred),ymax=exp(UCI),ymin=exp(LCI),group=as.factor(Mean_T),fill=as.factor(Mean_T)))+geom_line()+geom_ribbon(alpha=0.5)
-Temp_Age2 <- Temp_Age1+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(size=1.5,colour="black",fill=NA))+ theme(legend.position="none")+facet_wrap(~Mean_T,scales = "free_x")
+Temp_Age2 <- Temp_Age1+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(size=1.5,colour="black",fill=NA))+ theme(legend.position="none")+facet_wrap(~Mean_T)
 Temp_Age3 <- Temp_Age2+scale_fill_brewer(palette = "Set1")+geom_rug(data=Liu_Temp,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL))+geom_point(data=Liu_Temp,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL),shape=1,alpha=0.2)
 Temp_Age3 <- Temp_Age3 + labs(y = expression(paste("Aboveground biomass (Mg ",ha^-1,")",sep="")),
                               x = "Estimated forest age")
@@ -291,12 +292,12 @@ AP_pred$LCI<-AP_pred$Pred-(predict(top_model,AP_pred,level=0,se.fit=T)$se.fit*2)
 #now plot this
 theme_set(theme_bw(base_size=12))
 Temp_precip1 <- ggplot(AP_pred,aes(Mean_precip,exp(Pred),ymax=exp(UCI),ymin=exp(LCI),group=as.factor(Mean_T),fill=as.factor(Mean_T)))+geom_line()+geom_ribbon(alpha=0.5)
-Temp_precip2 <- Temp_precip1 + theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(size=1.5,colour="black",fill=NA))+ theme(legend.position="none")+facet_wrap(~Mean_T,scales = "free_x")
+Temp_precip2 <- Temp_precip1 + theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(size=1.5,colour="black",fill=NA))+ theme(legend.position="none")+facet_wrap(~Mean_T)
 Temp_precip3 <- Temp_precip2 + scale_fill_brewer(palette = "Set1")+geom_rug(data=Liu_Temp,aes(x=Mean_precip,y=AGB,ymax=NULL,ymin=NULL,fill=NULL))+geom_point(data=Liu_Temp,aes(x=Mean_precip,y=AGB,ymax=NULL,ymin=NULL,fill=NULL),shape=1,alpha=0.2)
 Temp_precip3 <- Temp_precip3 + labs(y=expression(paste("Aboveground biomass (Mg ",ha^-1,")",sep="")),
                                    x= "Mean annual precipitation (mm)")
 ggsave("Figures/Temp_Precip.png",plot=Temp_precip3,height=5,width=8,dpi=800,units="in")
 
-# Spatial look 
+# Spatial look at the residuals
 #r <- residuals(top_model)
 #base_world+geom_point(data=Liu,aes(x=Long,y=Lat,size=sqrt(r^2)),color="blue")
