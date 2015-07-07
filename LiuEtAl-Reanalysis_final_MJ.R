@@ -10,6 +10,13 @@ library(lattice)
 library(ncf)
 library(plyr)
 
+#### Output Figure extent parameters ####
+fig_h = 5
+fig_w = 8
+fig_dpi = 400
+fig_units = "in"
+fig_scale = 1.2
+
 #### Data loading and format ####
 # Load in the supplementary data from LIU et al. DOI: 10.1111/geb.12113
 Liu <- read.csv("Data/geb12113-sup-0001-ts1.csv")
@@ -40,12 +47,11 @@ world_map <- map_data("world")#Get world map info
 p <- ggplot() + coord_fixed()#Create a base plot
 base_world <- p + geom_polygon(data=world_map,aes(x=long,y=lat,group=group))#Add map to base plot
 base_world + geom_point(data=Liu,aes(x=Long,y=Lat,colour=Ref),alpha=0.5)+facet_wrap(~Ref,5)
-ggsave("Figures/DataDistribution.png",scale = 1.5,dpi = 300)
+ggsave("Figures/DataDistribution.png",height=fig_h,width=fig_w,dpi=fig_dpi,units=fig_units,scale=fig_scale)
 
 # references may focus on particular areas of the globe but the big ones (Luo, 1996; Ma, 2012; Luyassaert et al 2007)
 # come from quite a spread of different locations so I'm not super sure we need to include random effects
-
-## MJ-COMMENT: I would still do that because especially the smaller studies likely also used different
+## COMMENT: I would still do that because especially the smaller studies likely also used different
 ## allometric equations and methodologies which could be important to take into account
 
 # ---------------------------------------------------- #
@@ -135,7 +141,7 @@ sar.df <- rbind(sar.df,data.frame(mean.of.class=ncf.cor_age_ourmodel$mean.of.cla
 g <- ggplot(sar.df,aes(x=mean.of.class,y=correlation))
 g <- g + geom_line() + facet_wrap(~type,nrow = 3,as.table = T)
 g <- g + labs(x="Distance class",y="Correlation",title="Correcting for spatial autocorrelation in models")
-ggsave("Figures/SpatialAutocorrelationOfOriginalModelResiduals.png",plot=g,scale = 1.5,dpi=300)
+ggsave("Figures/SpatialAutocorrelationOfOriginalModelResiduals.png",plot=g,height=fig_h,width=fig_w,dpi=fig_dpi,units=fig_units,scale=fig_scale)
 
 # All models with SAC and random structure perform better than Liu et al. original models
 # and reduce the spatial autocorrelation especially at larger scales!
@@ -244,7 +250,7 @@ Age_precip2 <- Age_precip1+theme(panel.grid.major = element_blank(),panel.grid.m
 Age_precip3 <- Age_precip2+scale_fill_brewer(palette = "Set1")+geom_rug(data=Liu_precip,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL))+geom_point(data=Liu_precip,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL),shape=1,alpha=0.5)
 Age_precip3 <- Age_precip3+labs(y=expression(paste("Aboveground biomass (Mg ",ha^-1,")",sep="")),
                                 x="Estimated forest age")
-ggsave("Figures/Age_Precip.png",plot = Age_precip3,height=5,width=8,dpi=800,units="in")
+ggsave("Figures/Age_Precip.png",plot = Age_precip3,height=fig_h,width=fig_w,dpi=fig_dpi,units=fig_units,scale=fig_scale)
 
 # Now age and temperature
 Liu_Temp <- subset(Liu,Tempbin>=0&Tempbin<=20)
@@ -266,7 +272,7 @@ Temp_Age2 <- Temp_Age1+theme(panel.grid.major = element_blank(),panel.grid.minor
 Temp_Age3 <- Temp_Age2+scale_fill_brewer(palette = "Set1")+geom_rug(data=Liu_Temp,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL))+geom_point(data=Liu_Temp,aes(x=Age,y=AGB,ymax=NULL,ymin=NULL,fill=NULL),shape=1,alpha=0.2)
 Temp_Age3 <- Temp_Age3 + labs(y = expression(paste("Aboveground biomass (Mg ",ha^-1,")",sep="")),
                               x = "Estimated forest age")
-ggsave("Figures/Age_Temp.png",plot = Temp_Age3,height=3,width=8,dpi=800,units="in")
+ggsave("Figures/Age_Temp.png",plot = Temp_Age3,height=fig_h,width=fig_w,dpi=fig_dpi,units=fig_units,scale=fig_scale)
 
 #now temperature and precipitation
 Liu_Temp<-subset(Liu,Tempbin>=0&Tempbin<=20)
@@ -291,7 +297,7 @@ Temp_precip2 <- Temp_precip1 + theme(panel.grid.major = element_blank(),panel.gr
 Temp_precip3 <- Temp_precip2 + scale_fill_brewer(palette = "Set1")+geom_rug(data=Liu_Temp,aes(x=Mean_precip,y=AGB,ymax=NULL,ymin=NULL,fill=NULL))+geom_point(data=Liu_Temp,aes(x=Mean_precip,y=AGB,ymax=NULL,ymin=NULL,fill=NULL),shape=1,alpha=0.2)
 Temp_precip3 <- Temp_precip3 + labs(y=expression(paste("Aboveground biomass (Mg ",ha^-1,")",sep="")),
                                    x= "Mean annual precipitation (mm)")
-ggsave("Figures/Temp_Precip.png",plot=Temp_precip3,height=5,width=8,dpi=800,units="in")
+ggsave("Figures/Temp_Precip.png",plot=Temp_precip3,height=fig_h,width=fig_w,dpi=fig_dpi,units=fig_units,scale=fig_scale)
 
 # Spatial look at the residuals
 #r <- residuals(top_model)

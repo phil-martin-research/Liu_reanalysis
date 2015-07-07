@@ -3,6 +3,13 @@ library(maps)
 library(sp)
 library(ggmap)
 
+#### Output Figure extent parameters ####
+fig_h = 5
+fig_w = 8
+fig_dpi = 400
+fig_units = "in"
+fig_scale = 1.2
+
 #### GGMap of study points ####
 map("world", fill=TRUE, col="white", bg="lightblue", ylim=c(-60, 90), mar=c(0,0,0,0))
 d <- SpatialPointsDataFrame(cbind(Liu$Long,Liu$Lat),data=data.frame(Liu$Age,Liu$AGB))
@@ -24,7 +31,7 @@ coord <- subset(Liu,select=c(Long,Lat,AGB,Age))
 map <- map + geom_point(data=coord,aes(x=Long, y=Lat,size=Age),alpha = .5,color="darkblue")  + scale_size_continuous(breaks=c(100,300,500,900,1200),range=c(1,6))# + scale_colour_gradient(low="blue",high="darkred",guide="colourbar") 
 map <- map + scale_size_continuous(guide_legend(title = "Age (in years)"))
 map
-ggsave(filename="Figures/LIU_StudyMap-Size.png",plot=map,width=9,height=4,units="in",dpi=400)
+ggsave(filename="Figures/LIU_StudyMap-Size.png",plot=map,height=fig_h,width=fig_w,dpi=fig_dpi,units=fig_units,scale=fig_scale)
 
 # How many sites are in the tropics
 Liu_trop <- subset(Liu,(Lat>-23.5&Lat<23.5))
