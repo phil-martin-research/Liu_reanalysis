@@ -49,13 +49,6 @@ base_world <- p + geom_polygon(data=world_map,aes(x=long,y=lat,group=group))#Add
 base_world + geom_point(data=Liu,aes(x=Long,y=Lat,colour=Ref),alpha=0.5)+facet_wrap(~Ref,5)
 ggsave("Figures/DataDistribution.png",height=fig_h,width=fig_w,dpi=fig_dpi,units=fig_units,scale=fig_scale)
 
-# references may focus on particular areas of the globe but the big ones (Luo, 1996; Ma, 2012; Luyassaert et al 2007)
-# come from quite a spread of different locations so I'm not super sure we need to include random effects
-## COMMENT: I would still do that because especially the smaller studies likely also used different
-## allometric equations and methodologies which could be important to take into account
-
-#PM-COMMENT - Fair point, we can stick with the original method then
-
 # ---------------------------------------------------- #
 # Spatial autocorrelation of Liu et al. original data
 
@@ -80,7 +73,7 @@ corMatrix(cs1Exp)[1:10, 1:4] # Looks good
 # Then we run some null-models to test if ether random variables or Spatial Autocorrelation 
 # are appropriate on the Above-Ground-Biomass
 
-null.model<-lme(log(AGB)~1,data=Liu,random=~1|dummy,method="ML") # Without Random Strucutre
+null.model<-lme(log(AGB)~1,data=Liu,random=~1|dummy,method="ML") # Without Random Structure - equivalent to original OLS 
 null.model2<-lme(log(AGB)~1,data=Liu,random=~1|Ref,method="ML") # With Random Structure
 null.model3<-lme(log(AGB)~1,data=Liu,random=~1|Ref/Site,method="ML") # Hierarchical nested random Structure 
 null.model4<- update(null.model2, correlation = corExp(1, form = ~ Lat_J + Long),method="ML") # The same as above but including the Spatial Autocorrelation matrix
@@ -90,6 +83,7 @@ null.model5<- update(null.model3, correlation = corExp(1, form = ~ Lat_J + Long)
 (nm_out <- aictab(list(null.model,null.model2,null.model3,null.model4,null.model5),sort=T,second.ord=F,
                   modnames=c("Null - w/o Random","Null - w. Random","Null - w. nested Random","Null - w. Random + SAC","Null - w. nested Random + SAC")) )
 
+write.csv(as.data.frame(nm_out),"Results/NullModel.Comparison.csv")
 # Models that account for differences between studies and / or spatial autocorrelation
 # outperform models that have no such structure (such as Liu et al. original OLS)
 
@@ -116,6 +110,7 @@ Age_model_sac<-lme(AGB~Age+I(Age^2),data=Liu,random=~1|Ref/Site,correlation = co
 
 (liuold_out <- aictab(list(Precip_model,Precip_model_sac,Temp_model,Temp_model_sac,Age_model,Age_model_sac),sort=T,second.ord=F,
                       modnames=c("AGB - Precip","AGB - Precip + SAC","AGB ~ Temp","AGB - Temp + SAC","AGB - Age","AGB - Age + SAC")) )
+write.csv(as.data.frame(liuold_out),"Results/LIUmodels_SAC.csv")
 
 mean(liuold_out$Delta_AIC[3:6])
 
@@ -161,23 +156,23 @@ Liu$Age_sq<-Liu$Age^2
 mymodel<-lme(AGB~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip+Age_sq+logAge*Mean_precip+logAge*Mean_T2,
              data=Liu,
              random=~1|Ref/Site,
-#             weights=varFixed(~Mean_T2),
              correlation = corExp(1, form = ~ Lat_J + Long),
              method="ML")
 
 # Check for heteroskedasticity
 plot(mymodel, which=2) # Somewhat greater spread at higher AGB
-plot(ranef(mymodel)) # seem okay
+plot(ranef(mymodel)) # Random effects seem okay
 
 qplot(Liu$Age,resid(mymodel))+geom_smooth()
 qplot(Liu$Mean_T2,resid(mymodel))+geom_smooth()
 qplot(Liu$Mean_precip,resid(mymodel))+geom_smooth()
-qplot(x=fitted(mymodel),y=resid(mymodel))+geom_smooth()
 qqnorm(mymodel,abline = c(0, 1))
-# generally all of this seems to be ok, residuals look fine
-#PM note - see here I would say there is evidence that variance is increasing 
-#as the fitted values increase
+# Heteroskedasticity is present in some cases, 
+# likely due to small sample sizes with high variances in extreme regions (few samples in tropics)
 
+# MJ - Note: Experienced with various variance functions, but nether of them improved the fit.
+# Implementing for instance a a general varPower() function removes the heteroskedasticity, but doesn't change the outcome ?
+# In addition our top-model doesn't show this general heteroskedasticity pattern anymore -> # Line 195
 
 # Now we dredge the model so that the value of each variable in predicting biomass
 # can be assessed rather than using them in isolation
@@ -189,9 +184,6 @@ modsumm2 <- subset(modsumm,modsumm$delta<7)
 modsumm2
 averaged <- model.avg(modsumm2,fit=T,subset=delta<7)
 
-## MJ - COMMENT: The above model selection does not kickout log-terms for me?
-## version: nlme_3.1-120 | MuMIn_1.13.4
-
 # since the model without log terms comes out best, rerun the model averaging
 # routine without this the log term
 mymodel2<-lme(log(AGB)~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip,
@@ -200,7 +192,7 @@ mymodel2<-lme(log(AGB)~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip,
 #              weights=varFunc(~I(1/Mean_T2)),
               correlation = corExp(1, form = ~ Lat_J + Long),
               method="ML")
-plot(mymodel2)
+plot(mymodel2) 
 
 MS2 <- dredge(mymodel2,evaluate=T,rank=AICc,trace=T,REML=F)
 poss_mod <- get.models(MS2,subset=delta<7)
@@ -227,6 +219,7 @@ Age_model<-lme(log(AGB)~Age+I(Age^2),data=Liu,random=~1|Ref/Site,correlation = c
 
 (out <- aictab(list(top_model,Precip_model,Temp_model,Age_model),sort=T,second.ord=T,
                modnames=c("Model including Interactions","Precip. only","Temp. only","Age only")) )
+write.csv(as.data.frame(out),"Results/FinalModelComparison.csv")
 
 # Our Best performing model includes several interactions between all used Predictors
 # outperforms all other of Liu et al.s Models even if accounted for Spatial Autocorrelation 
@@ -238,7 +231,6 @@ Liu_precip$Mean_precip<-Liu_precip$Precipbin
 
 ddply(Liu,.(Precipbin),summarize,minp=min(Age),max=max(Age),no=length(Age))
 
-# Assume that Temp2 is average?
 # Figure for interaction between age, precipitation and AGB
 AP_pred<-data.frame(rbind(data.frame(Age=seq(80,795,1),Mean_precip=1000,Mean_T2=mean(Liu$Mean_T2)),
                data.frame(Age=seq(80,1200,1),Mean_precip=2000,Mean_T2=mean(Liu$Mean_T2)),
