@@ -153,8 +153,9 @@ Liu$Mean_T2<-Liu$Mean_T+17
 Liu$logAge<-log(Liu$Age)
 Liu$Age_sq<-Liu$Age^2
 
-mymodel<-lme(AGB~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip+Age_sq+logAge*Mean_precip+logAge*Mean_T2,
+mymodel<-lme(log(AGB)~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip+Age_sq+logAge*Mean_precip+logAge*Mean_T2,
              data=Liu,
+             weights= varFunc(~I(Mean_T2)), # To approach homoscedasticity
              random=~1|Ref/Site,
              correlation = corExp(1, form = ~ Lat_J + Long),
              method="ML")
@@ -170,14 +171,10 @@ qqnorm(mymodel,abline = c(0, 1))
 # Heteroskedasticity is present in some cases, 
 # likely due to small sample sizes with high variances in extreme regions (few samples in tropics)
 
-# MJ - Note: Experienced with various variance functions, but nether of them improved the fit.
-# Implementing for instance a a general varPower() function removes the heteroskedasticity, but doesn't change the outcome ?
-# In addition our top-model doesn't show this general heteroskedasticity pattern anymore -> # Line 195
-
 # Now we dredge the model so that the value of each variable in predicting biomass
 # can be assessed rather than using them in isolation
 # Use second-order Information Criterion and keep Age as explanatory variable
-MS1 <- dredge(mymodel,evaluate=T,rank=AICc,trace=T,subset = !(Age&&logAge) && dc(Age,Age_sq) )
+MS1 <- dredge(mymodel,evaluate=T,rank=AICc,trace=T,subset = !(Age&&logAge) && dc(Age,Age_sq) ,extra=c("R^2","adjR^2"))
 poss_mod <- get.models(MS1,subset=delta<7)
 modsumm <- model.sel(poss_mod, rank = "AICc",fit=T) # Rank and select the best models
 modsumm2 <- subset(modsumm,modsumm$delta<7)
@@ -188,12 +185,12 @@ averaged <- model.avg(modsumm2,fit=T,subset=delta<7)
 # routine without this the log term
 mymodel2<-lme(log(AGB)~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip,
               data=Liu,
+              weights= varFunc(~I(Mean_T2)), # To approach homoscedasticity
               random=~1|Ref/Site,
-#              weights=varFunc(~I(1/Mean_T2)),
               correlation = corExp(1, form = ~ Lat_J + Long),
               method="ML")
 plot(mymodel2) 
-
+anova(mymodel,mymodel2)
 MS2 <- dredge(mymodel2,evaluate=T,rank=AICc,trace=T,REML=F)
 poss_mod <- get.models(MS2,subset=delta<7)
 modsumm <- model.sel(poss_mod, rank = "AICc",fit=T) # Rank and select the best models
