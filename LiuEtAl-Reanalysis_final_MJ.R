@@ -190,7 +190,7 @@ mymodel2<-lme(log(AGB)~Age*Mean_precip+Age*Mean_T2+Mean_T2*Mean_precip,
               correlation = corExp(1, form = ~ Lat_J + Long),
               method="ML")
 plot(mymodel2) 
-
+anova(mymodel,mymodel2)
 MS2 <- dredge(mymodel2,evaluate=T,rank=AICc,trace=T,REML=F)
 poss_mod <- get.models(MS2,subset=delta<7)
 modsumm <- model.sel(poss_mod, rank = "AICc",fit=T) # Rank and select the best models
