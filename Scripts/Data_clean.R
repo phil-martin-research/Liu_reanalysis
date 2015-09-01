@@ -11,8 +11,6 @@ Liu<-read.csv("Data/Liu_et_al.csv",header=T)
 Liu_sub<-Liu[-c(2:4,6,18:22)]
 Liu_sub<-Liu_sub[-c(898:903),]
 colnames(Liu_sub)<-c("ID","Site","Lat","Long","Mean_T","Mean_precip","AGB","L_AGB","T_AGB","Age","A_L_Ratio","A_T_Ratio","Ref")
-Liu_sub<-subset(Liu_sub,!is.na(AGB))
-#set levels for sites
+Liu_sub<-subset(Liu_sub,!is.na(AGB)&!is.na(Age)&Age>0)
 levels(Liu_sub$Site)<-seq(1:449)
-
 write.csv(Liu_sub,"Data/Liu_Aged.csv")
