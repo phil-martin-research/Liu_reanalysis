@@ -9,45 +9,97 @@ library(scales)
 library(lattice)
 library(ncf)
 library(plyr)
-
-#### Output Figure extent parameters ####
-fig_h = 5
-fig_w = 8
-fig_dpi = 400
-fig_units = "in"
-fig_scale = 1.2
+library(raster)
+library(sp)
+library(maptools)
 
 #### Data loading and format ####
 # Load in the supplementary data from LIU et al. DOI: 10.1111/geb.12113
-Liu <- read.csv("Data/geb12113-sup-0001-ts1.csv")
+Liu <- read.csv("Data/Liu_aged.csv")
+temp<-raster("Data/bio1.bil")
+precip<-raster("Data/bio12.bil")
+forest<-raster("Data/Forest.tif")
 
-# Format and cleanup Data for the reanalysis
-Liu_sub<-Liu[-c(2:4,6,18:22)] # Get Columns of Interest
-colnames(Liu_sub)<-c("ID","Site","Lat","Long","Mean_T","Mean_precip","AGB","L_AGB","T_AGB","Age","A_L_Ratio","A_T_Ratio","Ref")
-Liu_sub<-subset(Liu_sub,AGB>0&Age>0) # Only Site with given Age and AGB
-levels(Liu_sub$Site)<-seq(1:449) # Correct Site Level
-Liu_sub$Age_sq<-Liu_sub$Age^2
-Liu <- Liu_sub
-rm(Liu_sub)
 
-#### Explanatory analysis ------------------- #
-# Investigate the Structure
-hist(Liu$Age)
-hist(Liu$Mean_T)
-hist(Liu$Mean_precip)
+#do spatial analysis to look at representativeness
+#of forests used  in our study
+Liu_coords<-SpatialPoints(cbind(Liu[,5],Liu[,4]))
+Liu_clim<-data.frame(precip=extract(precip,Liu_coords),temp=extract(temp/10,Liu_coords),data="Our data")
 
-ggplot(Liu,aes(x=Age,y=AGB))+geom_point()+geom_smooth() # very high AGB of Australian forest at ~500yrs
-ggplot(Liu,aes(x=Mean_T,y=AGB))+geom_point()+geom_smooth()# high AGB again at ~10 degrees C
-ggplot(Liu,aes(x=Mean_precip,y=AGB))+geom_point()+geom_smooth()# positive trend but litte data >2000mm
+#create grid with 0.5 degree resolution
+Grid<-expand.grid(x=seq(-180,180,by = 0.5),y=seq(-90,90,by=0.5))
+coordinates(Grid)<-c("x", "y")
+gridded(Grid) <- TRUE
+Forest_climate<-data.frame(precip=extract(precip,Grid),temp=extract(temp,Grid),forest=extract(forest,Grid))
+Forest_climate2<-subset(Forest_climate,forest==1)
+all_data<-data.frame(precip=as.numeric(Forest_climate2$precip),
+                     temp=as.numeric(Forest_climate2$temp/10),
+                     data="Global data")
 
-# Histograms indicate a general paucity at Age >500 years, Temp <-5 or >20, or precip >3000
+#stick these data from sites and all forests together
+Climate<-rbind(Liu_clim,all_data)
+Climate<-subset(Climate,!is.na(precip)&!is.na(temp))
+Climate$Climate_precip_bin<-as.numeric(cut(Climate$precip,
+    breaks=(seq(min(Climate$precip),max(Climate$precip),by=200)),
+    labels=seq(min(Climate$precip),max(Climate$precip),by=200)[-1]))
+Climate$Climate_temp_bin<-as.numeric(cut(Climate$temp,
+                        breaks=(seq(min(Climate$temp),max(Climate$temp),by=1)),
+                        labels=seq(min(Climate$temp),max(Climate$temp),by=1)[-1]))
 
-# Look at it spatially
+
+ddply(Climate,.(data),summarise,
+      Temp_perc=(Climate_temp_bin/length(Climate_temp_bin))*100,
+      Clim_perc=(Climate_precip_bin/length(Climate_precip_bin))*100)
+
+
+#find convex hull for these data
+find_hull <- function(Climate) Climate[chull(Climate$precip,Climate$temp), ]
+hulls <- ddply(Climate, "data", find_hull)
+
+plot <- ggplot(data = Climate, aes(x = precip, y = temp, colour=data)) +
+   geom_point(alpha=0.5)+geom_polygon(data=hulls,fill=NA)+
+  labs(x = "Precipitation", y = "Temperature")+facet_wrap(~data)
+plot
+
+
+
+
+bb <- extent(-180, 180, -90, 90)
+precip2 <- setExtent(precip, bb, keepres=TRUE)
+forest2 <- setExtent(forest, bb, keepres=TRUE)
+
+plot(precip2)
+plot(forest)
+
+Precip_mask<-mask(precip2,forest2)
+
+#look at biases in the data that may influence results
+
+#age
+theme_set(theme_bw(base_size=12))
+Geom_hist<-ggplot(Liu,aes(x=Age))+geom_histogram()+ylab("number of sites")+xlab("Estimate age (Years)")+
+theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(size=1.5,colour="black",fill=NA))+geom_hline(y=0)
+
+
+#location
+theme_set(theme_bw(base_size=12))
 world_map <- map_data("world")#Get world map info
 p <- ggplot() + coord_fixed()#Create a base plot
-base_world <- p + geom_polygon(data=world_map,aes(x=long,y=lat,group=group))#Add map to base plot
-base_world + geom_point(data=Liu,aes(x=Long,y=Lat,colour=Ref),alpha=0.5)+facet_wrap(~Ref,5)
-ggsave("Figures/DataDistribution.png",height=fig_h,width=fig_w,dpi=fig_dpi,units=fig_units,scale=fig_scale)
+base_world <- p + geom_polygon(data=world_map,aes(x=long,y=lat,group=group),fill="light grey")#Add map to base plot
+Location<-base_world + geom_point(data=Liu,aes(x=Long,y=Lat,size=Age),colour="black",alpha=0.2)+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(size=1.5,colour="black",fill=NA),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())
+
+
+
 
 # ---------------------------------------------------- #
 # Spatial autocorrelation of Liu et al. original data
