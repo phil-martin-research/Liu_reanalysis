@@ -14,7 +14,7 @@ library(sp)
 library(maptools)
 
 #### Data loading and format ####
-# Load in the supplementary data from LIU et al. DOI: 10.1111/geb.12113
+# Load in data taken from LIU et al. DOI: 10.1111/geb.12113
 Liu <- read.csv("Data/Liu_aged.csv")
 
 # Null-models to test if ether random variables or Spatial Autocorrelation 
