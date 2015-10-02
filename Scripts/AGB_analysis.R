@@ -69,6 +69,11 @@ qqnorm(mymodel,abline = c(0, 1))
 # can be assessed rather than using them in isolation
 # Use second-order Information Criterion and keep Age as explanatory variable
 MS1 <- dredge(mymodel,evaluate=T,rank=AICc,trace=T)
+Model_comp<-data.frame(model.sel(MS1, rank = "AICc",fit=T)) # Rank and select the best models
+Model_comp<-round(Model_comp[,-1],2)
+colnames(Model_comp)[1:6]<-c("Age","Temperature","Precipitation","Age*Temperature","Temperature*Precipitation","Age*Precipitation")
+write.csv(Model_comp,"Tables/Model_comparison.csv",row.names=F)
+
 poss_mod <- get.models(MS1,subset=delta<7)
 modsumm <- model.sel(poss_mod, rank = "AICc",fit=T) # Rank and select the best models
 Mod.avg<-model.avg(modsumm)
@@ -121,5 +126,5 @@ Plot1+geom_point(data=Liu,shape=1,alpha=0.2)+
         panel.border = element_rect(size=1.5,colour="black",fill=NA),
         legend.position="none")+xlab("Age (years)")+
   ylab(expression(paste("Aboveground biomass (Mg ", ha^-1,")",sep="")))
-ggsave("Figures/AGB_change.png",width = 8,height=6,units="in",dpi=400)
+ggsave("Figures/AGB_change.pdf",width = 8,height=6,units="in",dpi=400)
 
