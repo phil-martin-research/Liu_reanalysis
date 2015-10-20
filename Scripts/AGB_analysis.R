@@ -82,8 +82,8 @@ r.squaredGLMM(mymodel)
 
 
 #now create predictions
-Liu$Mean_T_bins<-cut(Liu$Mean_T2,(quantile(Liu$Mean_T2)),labels=c("-16.8 ~degree*C - 0.2 ~degree*C", "0.2 ~degree*C - 3.8 ~degree*C", "3.8 ~degree*C - 8.0 ~degree*C", "8.0 ~degree*C - 26.2 ~degree*C"),include.lowest = T)
-Liu$Mean_P_bins<-cut(Liu$Precip2,(quantile(Liu$Precip2)),labels=c("250-583", "583-796", "796-1079", "1079-5800"),include.lowest = T)
+Liu$Mean_T_bins<-cut(Liu$Mean_T2,(quantile(Liu$Mean_T2)),labels=c("-16.8 ~*C - 0.2 ~*C", "0.2 ~*C - 3.8 ~*C", "3.8 ~*C - 8.0 ~*C", "8.0 ~*C - 26.2 ~*C"),include.lowest = T)
+Liu$Mean_P_bins<-cut(Liu$Precip2,(quantile(Liu$Precip2)),labels=c("250-583mm", "583-796mm", "796-1079mm", "1079-5800mm"),include.lowest = T)
 
 
 new.data<-expand.grid(Mean_T2=c(mean(c(-3.35,-0.66)),mean(c(-0.66,-0.09)),mean(c(-0.09,0.57)),mean(c(0.57,3.455))),
@@ -98,11 +98,12 @@ new.data$Mean_P_bins<-cut(new.data$Precip2,as.numeric(quantile(new.data$Precip2)
 new.data2<-data.frame(Mean_T2=rep(c(mean(c(-3.35,-0.66)),mean(c(-0.66,-0.09)),mean(c(-0.09,0.57)),mean(c(0.57,3.455))),4),
                       Precip2=rep(c(mean(c(-1.11,-0.61)),mean(c(-0.61,-0.28)),mean(c(-0.28,0.14)),mean(c(0.14,7.27))),each = 4))
 new.data2$Mean_T_bins<-cut(new.data2$Mean_T2,as.numeric(quantile(new.data2$Mean_T2)),labels=c("-16.8 - 0.2", "0.2 - 3.8", "3.8 - 8.0", "8.0 - 26.2"),include.lowest = T)
-new.data2$Mean_P_bins<-cut(new.data2$Precip2,as.numeric(quantile(new.data2$Precip2)),labels=c("250 - 583", "583 - 796", "796 - 1079", "1079 - 5800"),include.lowest = T)
+new.data2$Mean_P_bins<-cut(new.data2$Precip2,as.numeric(quantile(new.data2$Precip2)),labels=c("250-583mm", "583-796mm", "796-1079 mm", "1079-5800 mm"),include.lowest = T)
 
 
 new.data3<-ddply(Liu,.(Mean_P_bins,Mean_T_bins),summarise,min_age=min(Age3),max_age=max(Age3),Mean_T2=mean(Mean_T2),Precip2=mean(Precip2))
 new.data4<-merge(new.data2,new.data3,by=c("Mean_P_bins","Mean_T_bins"))
+head(new.data3)
 
 new.data5<-NULL
 for (i in 1:nrow(new.data3)){
@@ -119,7 +120,7 @@ new.data5$AGB<-exp(predict(Mod.avg,newdata=new.data5,level=0))
 (log(Liu$Age)-log(mean(Liu$Age)))/sd(log(Liu$Age))
 
 theme_set(theme_bw(base_size=12))
-Plot1<-ggplot(new.data5,aes(x=exp((Age3*sd(log(Liu$Age)))+log(mean(Liu$Age))),y=AGB))+geom_line(size=1)+facet_grid(Mean_T_bins~Mean_P_bins,labeller = label_parsed)
+Plot1<-ggplot(new.data5,aes(x=exp((Age3*sd(log(Liu$Age)))+log(mean(Liu$Age))),y=AGB))+geom_line(size=1)+facet_grid(Mean_T_bins~Mean_P_bins)
 Plot1+geom_point(data=Liu,shape=1,alpha=0.2)+
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
