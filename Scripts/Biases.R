@@ -112,6 +112,6 @@ Location<-base_world2 + geom_point(data=Liu,aes(x=Long,y=Lat),colour="black",alp
         legend.position="none")+annotate(geom = "text",x = -160,y=70,label="(a)")
 Location
 
-png("Figures/Bias.png",width = 8,height = 8,units = "in",res =400)
+pdf("Figures/Bias.pdf",width = 8,height = 8,units = "in",res =400)
 grid.arrange(Location,arrangeGrob(C_plot4,Geom_hist,ncol=2),ncol=1)
 dev.off()
